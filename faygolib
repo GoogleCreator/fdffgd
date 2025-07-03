@@ -1,249 +1,263 @@
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+-- CSXUI.lua
+-- A lightweight CS:GO‑style UI library for Roblox
+local CSXUI = {}
+CSXUI.__index = CSXUI
 
--- UI Library
-local UILibrary = {}
-UILibrary.__index = UILibrary
+-- Default palette (can be customized)
+CSXUI.Colors = {
+    Background = Color3.fromRGB(30, 30, 30),
+    Accent     = Color3.fromRGB(235, 185, 0),
+    Primary    = Color3.fromRGB(45, 45, 45),
+    Text       = Color3.fromRGB(220, 220, 220),
+    Hover      = Color3.fromRGB(55, 55, 55),
+    Active     = Color3.fromRGB(65, 65, 65),
+}
 
-function UILibrary.new(title)
-    local self = setmetatable({}, UILibrary)
+-- Create main UI container
+function CSXUI.new(title)
+    local self = setmetatable({}, CSXUI)
+    self.Window = Instance.new("ScreenGui")
+    self.Main = Instance.new("Frame")
+    self.Main.Size = UDim2.new(0, 400, 0, 30)
+    self.Main.Position = UDim2.new(0.5, -200, 0.3, 0)
+    self.Main.BackgroundColor3 = self.Colors.Background
+    self.Main.Parent = self.Window
+
+    local Title = Instance.new("TextLabel", self.Main)
+    Title.Size = UDim2.new(1, 0, 1, 0)
+    Title.BackgroundTransparency = 1
+    Title.TextColor3 = self.Colors.Text
+    Title.Font = Enum.Font.GothamSemibold
+    Title.TextSize = 18
+    Title.Text = title
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.TextYAlignment = Enum.TextYAlignment.Center
+    Title.Padding = UDim.new(0, 8)
+
+    -- Container for controls
+    self.Container = Instance.new("Frame", self.Main)
+    self.Container.Size = UDim2.new(1, 0, 1, 0)
+    self.Container.Position = UDim2.new(0, 0, 0, 30)
+    self.Container.BackgroundTransparency = 1
     
-    -- Create ScreenGui
-    self.ScreenGui = Instance.new("ScreenGui")
-    self.ScreenGui.Name = "UILibrary"
-    self.ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
-    self.ScreenGui.ResetOnSpawn = false
-    
-    -- Create Main Frame
-    self.MainFrame = Instance.new("Frame")
-    self.MainFrame.Size = UDim2.new(0, 300, 0, 400)
-    self.MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-    self.MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    self.MainFrame.BorderSizePixel = 0
-    self.MainFrame.Parent = self.ScreenGui
-    
-    -- Add corner
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = self.MainFrame
-    
-    -- Add shadow
-    local shadow = Instance.new("ImageLabel")
-    shadow.Size = UDim2.new(1, 10, 1, 10)
-    shadow.Position = UDim2.new(0, -5, 0, -5)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://6014261993"
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.5
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    shadow.Parent = self.MainFrame
-    
-    -- Title Bar
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 30)
-    titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = self.MainFrame
-    
-    local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 8)
-    titleCorner.Parent = titleBar
-    
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -10, 1, 0)
-    titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = title or "UI Library"
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextSize = 16
-    titleLabel.Font = Enum.Font.SourceSansBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = titleBar
-    
-    -- Content Frame
-    self.ContentFrame = Instance.new("Frame")
-    self.ContentFrame.Size = UDim2.new(1, -20, 1, -40)
-    self.ContentFrame.Position = UDim2.new(0, 10, 0, 35)
-    self.ContentFrame.BackgroundTransparency = 1
-    self.ContentFrame.Parent = self.MainFrame
-    
-    local layout = Instance.new("UIListLayout")
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 10)
-    layout.Parent = self.ContentFrame
-    
-    -- Dragging functionality
-    local dragging, dragInput, dragStart, startPos
-    titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = self.MainFrame.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    titleBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-            dragInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            self.MainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-    
+    self.Window.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     self.Elements = {}
     return self
 end
 
-function UILibrary:AddToggle(name, default, callback)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(1, 0, 0, 30)
-    toggleFrame.BackgroundTransparency = 1
-    toggleFrame.Parent = self.ContentFrame
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 14
-    label.Font = Enum.Font.SourceSans
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggleFrame
-    
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0, 40, 0, 20)
-    toggleButton.Position = UDim2.new(1, -50, 0.5, -10)
-    toggleButton.BackgroundColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(100, 100, 100)
-    toggleButton.Text = ""
-    toggleButton.BorderSizePixel = 0
-    toggleButton.Parent = toggleFrame
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = toggleButton
-    
-    local value = default
-    toggleButton.MouseButton1Click:Connect(function()
-        value = not value
-        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-        TweenService:Create(
-            toggleButton,
-            tweenInfo,
-            {BackgroundColor3 = value and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(100, 100, 100)}
-        ):Play()
-        if callback then
-            callback(value)
-        end
-    end)
-    
-    table.insert(self.Elements, toggleFrame)
+-- You can re-color the whole UI at any time:
+function CSXUI:SetTheme(colors)
+    for k,v in pairs(colors) do
+        if self.Colors[k] then self.Colors[k] = v end
+    end
+    -- future: apply to existing elements...
 end
 
-function UILibrary:AddSlider(name, min, max, default, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, 0, 0, 50)
-    sliderFrame.BackgroundTransparency = 1
-    sliderFrame.Parent = self.ContentFrame
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
+-- Button
+function CSXUI:Button(text, callback)
+    local btn = Instance.new("TextButton", self.Container)
+    btn.Size = UDim2.new(1, -16, 0, 30)
+    btn.BackgroundColor3 = self.Colors.Primary
+    btn.TextColor3 = self.Colors.Text
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 16
+    btn.Text = text
+    btn.Position = UDim2.new(0, 8, 0, #self.Elements*40 + 8)
+    btn.AutoButtonColor = false
+
+    btn.MouseEnter:Connect(function()
+        btn:TweenBackgroundColor3(self.Colors.Hover, "Out", "Quad", 0.2, true)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn:TweenBackgroundColor3(self.Colors.Primary, "Out", "Quad", 0.2, true)
+    end)
+    btn.MouseButton1Down:Connect(function()
+        btn:TweenBackgroundColor3(self.Colors.Active, "Out", "Quad", 0.1, true)
+    end)
+    btn.MouseButton1Up:Connect(function()
+        btn:TweenBackgroundColor3(self.Colors.Hover, "Out", "Quad", 0.1, true)
+        pcall(callback)
+    end)
+
+    table.insert(self.Elements, btn)
+    return btn
+end
+
+-- Toggle
+function CSXUI:Toggle(text, state, callback)
+    local idx = #self.Elements
+    local container = Instance.new("Frame", self.Container)
+    container.Size = UDim2.new(1, -16, 0, 30)
+    container.Position = UDim2.new(0, 8, 0, idx*40 + 8)
+    container.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(0.8, 0, 1, 0)
     label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 14
-    label.Font = Enum.Font.SourceSans
+    label.Text = text
+    label.TextColor3 = self.Colors.Text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 16
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = sliderFrame
-    
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(1, -20, 0, 10)
-    sliderBar.Position = UDim2.new(0, 10, 0, 30)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    sliderBar.BorderSizePixel = 0
-    sliderBar.Parent = sliderFrame
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 5)
-    corner.Parent = sliderBar
-    
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(0, 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    fill.BorderSizePixel = 0
-    fill.Parent = sliderBar
-    
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(0, 5)
-    fillCorner.Parent = fill
-    
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0, 50, 0, 20)
-    valueLabel.Position = UDim2.new(1, -60, 0, 0)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    valueLabel.TextSize = 12
-    valueLabel.Font = Enum.Font.SourceSans
-    valueLabel.Text = tostring(default)
-    valueLabel.Parent = sliderFrame
-    
-    local value = default
-    local range = max - min
-    fill.Size = UDim2.new((value - min) / range, 0, 1, 0)
-    
+    label.Position = UDim2.new(0, 0, 0, 0)
+
+    local box = Instance.new("Frame", container)
+    box.Size = UDim2.new(0, 20, 0, 20)
+    box.Position = UDim2.new(1, -20, 0, 5)
+    box.BackgroundColor3 = state and self.Colors.Accent or self.Colors.Primary
+
+    box.MouseButton1Click = Instance.new("TextButton", box)
+    box.MouseButton1Click.Size = UDim2.new(1,0,1,0)
+    box.MouseButton1Click.BackgroundTransparency = 1
+
+    local on = state
+
+    box.MouseButton1Click.MouseButton1Click:Connect(function()
+        on = not on
+        box:TweenBackgroundColor3(on and self.Colors.Accent or self.Colors.Primary, "Out", "Quad", 0.2, true)
+        pcall(callback, on)
+    end)
+
+    table.insert(self.Elements, container)
+    return container
+end
+
+-- Slider
+function CSXUI:Slider(text, min, max, start, callback)
+    local idx = #self.Elements
+    local grp = Instance.new("Frame", self.Container)
+    grp.Size = UDim2.new(1, -16, 0, 40)
+    grp.Position = UDim2.new(0, 8, 0, idx*50 + 8)
+    grp.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", grp)
+    lbl.Size = UDim2.new(1, 0, 0, 18)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text.." : "..tostring(start)
+    lbl.TextColor3 = self.Colors.Text
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 14
+
+    local barBG = Instance.new("Frame", grp)
+    barBG.Size = UDim2.new(1, 0, 0, 14)
+    barBG.Position = UDim2.new(0, 0, 0, 22)
+    barBG.BackgroundColor3 = self.Colors.Primary
+    barBG.ClipsDescendants = true
+
+    local fill = Instance.new("Frame", barBG)
+    fill.Size = UDim2.new((start-min)/(max-min), 0, 1, 0)
+    fill.BackgroundColor3 = self.Colors.Accent
+
     local dragging = false
-    sliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    barBG.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
         end
     end)
-    
-    sliderBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    barBG.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mousePos = input.Position.X
-            local barPos = sliderBar.AbsolutePosition.X
-            local barSize = sliderBar.AbsoluteSize.X
-            local ratio = math.clamp((mousePos - barPos) / barSize, 0, 1)
-            value = min + (ratio * range)
-            value = math.round(value)
-            fill.Size = UDim2.new(ratio, 0, 1, 0)
-            valueLabel.Text = tostring(value)
-            if callback then
-                callback(value)
-            end
+    barBG.InputChanged:Connect(function(inp)
+        if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+            local x = math.clamp((inp.Position.X - barBG.AbsolutePosition.X)/barBG.AbsoluteSize.X, 0, 1)
+            fill:TweenSize(UDim2.new(x,0,1,0),"Out","Quad",0.1,true)
+            local val = min + (max-min)*x
+            lbl.Text = text.." : "..math.floor(val)
+            pcall(callback, val)
         end
     end)
-    
-    table.insert(self.Elements, sliderFrame)
+
+    table.insert(self.Elements, grp)
+    return grp
 end
 
-function UILibrary:Destroy()
-    if self.ScreenGui then
-        self.ScreenGui:Destroy()
+-- Color Picker (simple)
+function CSXUI:ColorPicker(text, startColor, callback)
+    local idx = #self.Elements
+    local grp = Instance.new("Frame", self.Container)
+    grp.Size = UDim2.new(1, -16, 0, 30)
+    grp.Position = UDim2.new(0, 8, 0, idx*40 + 8)
+    grp.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", grp)
+    lbl.Size = UDim2.new(0.7,0,1,0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = self.Colors.Text
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 16
+
+    local swatch = Instance.new("Frame", grp)
+    swatch.Size = UDim2.new(0,24,0,24)
+    swatch.Position = UDim2.new(1,-28,0,3)
+    swatch.BackgroundColor3 = startColor
+
+    swatch.Active = true
+    local pickerOpen = false
+    local picker
+
+    local function openPicker()
+        if pickerOpen then return end
+        pickerOpen = true
+        picker = Instance.new("Frame", self.Window)
+        picker.Size = UDim2.new(0,200,0,200)
+        picker.Position = UDim2.new(0.5,-100,0.5,-100)
+        picker.BackgroundColor3 = self.Colors.Primary
+        -- simplistic: 3 sliders for RGB
+        local colors = {"R","G","B"}
+        for i, c in ipairs(colors) do
+            self:Slider(c,0,255,startColor[c], function(val)
+                local col = swatch.BackgroundColor3
+                local new = col
+                new = Color3.fromRGB(
+                    i==1 and val or math.floor(new.R*255),
+                    i==2 and val or math.floor(new.G*255),
+                    i==3 and val or math.floor(new.B*255)
+                )
+                swatch.BackgroundColor3 = new
+                callback(new)
+            end)
+        end
+        picker.MouseLeave:Connect(function()
+            picker:Destroy()
+            pickerOpen=false
+        end)
     end
-    self.Elements = nil
+
+    swatch.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+            openPicker()
+        end
+    end)
+
+    table.insert(self.Elements, grp)
+    return grp
 end
 
-return UILibrary
+-- Notification
+function CSXUI:Notify(text, duration)
+    local notif = Instance.new("Frame", self.Window)
+    notif.Size = UDim2.new(0, 300,0, 60)
+    notif.Position = UDim2.new(1,-310,0,20)
+    notif.BackgroundColor3 = self.Colors.Primary
+    notif.AnchorPoint = Vector2.new(0,0)
+
+    local lbl = Instance.new("TextLabel", notif)
+    lbl.Size = UDim2.new(1,0,1,0)
+    lbl.BackgroundTransparency=1
+    lbl.TextColor3 = self.Colors.Text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 16
+    lbl.Text = text
+
+    notif:TweenPosition(UDim2.new(1,-310,0,20),"Out","Back",0.5,true)
+    delay(duration or 3, function()
+        notif:TweenPosition(UDim2.new(1,10,0,20),"In","Quad",0.5,true)
+        wait(0.6)
+        notif:Destroy()
+    end)
+end
+
+return CSXUI
